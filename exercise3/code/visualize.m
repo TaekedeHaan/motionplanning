@@ -9,6 +9,7 @@ legendString = ["100, 0.1, 0.01", "100, 0.001, 0.0001", "100, 10, 1"];
 pathFig = ['fig', filesep];
 
 dim = [200, 200, 600, 500];
+dim2 = [200, 200, 600, 700];
 fontSize = 15;
 lineWidth = 2;
 % define colors
@@ -24,8 +25,8 @@ for i = 1:length(loadString)
     load(loadData);
     if i == 1
         f1 = plot_enviroment(hl, hu, xinit, dim);
-        f2 = plot_velocity(lb, ub, N, dim);
-        f3 = plot_inputs(lb, ub, N, dim);  
+        f2 = plot_velocity(lb, ub, N, dim2);
+        f3 = plot_inputs(lb, ub, N, dim2);  
     end
     % plot enviroment
     figure(1);
@@ -50,7 +51,7 @@ end
 
 % trajectory legend
 figure(1);
-legend(h1, legendString, 'Location','southeast');
+legend(h1, legendString, 'Location','northwest');
 set(gca,'fontsize', fontSize);
 
 saveas(gcf, [pathFig, 'trajectory'], 'jpg');
@@ -59,11 +60,11 @@ saveas(gcf, [pathFig, 'trajectory','.eps'], 'epsc');
 % Velosity legend
 figure(2);
 subplot(2,1,1); 
-legend(h21, legendString, 'Location','southeast');
+legend(h21, legendString, 'Location','northeast');
 set(gca,'fontsize', fontSize);
 
 subplot(2,1,2);
-legend(h22, legendString, 'Location','southeast');
+legend(h22, legendString, 'Location','northeast');
 set(gca,'fontsize', fontSize);
 
 saveas(gcf, [pathFig, 'velosity'], 'jpg');
@@ -72,11 +73,11 @@ saveas(gcf, [pathFig, 'velosity','.eps'], 'epsc');
 % input legend
 figure(3);
 subplot(2,1,1); 
-legend(h31, legendString, 'Location','southeast');
+legend(h31, legendString, 'Location','northeast');
 set(gca,'fontsize', fontSize);
 
 subplot(2,1,2);
-legend(h32, legendString, 'Location','southeast');
+legend(h32, legendString, 'Location','northeast');
 set(gca,'fontsize', fontSize);
 
 saveas(gcf, [pathFig, 'input'], 'jpg');
