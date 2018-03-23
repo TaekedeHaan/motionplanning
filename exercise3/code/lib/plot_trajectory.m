@@ -1,4 +1,4 @@
-function plotResults(fileID, hl, hu, xinit, X, lineWidth, fontSize, dim)
+function plot_trajectory(fileID, hl, hu, xinit, X, lineWidth, fontSize, dim)
 
 pathFig = [pwd, filesep, 'fig' filesep];
 

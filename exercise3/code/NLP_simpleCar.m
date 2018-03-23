@@ -155,18 +155,30 @@ U = TEMP(1:2,:);
 X = TEMP(3:6,:);
 
 % % plot trajectory
-plotResults(fileID, model.hl, model.hu, model.xinit, X, lineWidth, fontSize, 0)
+plot_trajectory(fileID, model.hl, model.hu, model.xinit, X, lineWidth, fontSize, 0)
 hl = model.hl;
 hu = model.hu;
+lb = model.lb;
+ub = model.ub;
+N = model.N;
 xinit = model.xinit;
-save([fileID,'.mat'], 'fileID', 'hl', 'hu', 'xinit', 'X', 'lineWidth', 'fontSize');
+save(['data', filesep, 'data', fileID,'.mat'], 'fileID', 'hl', 'hu', 'lb', 'ub', 'N', 'xinit', 'X');
 
 % plot heading angle and velocity variables
 figure(2); clf;
-subplot(2,1,1); plot(X(3,:)); grid on; title('velocity'); hold on; 
+subplot(2,1,1); 
+plot(X(3,:)); 
+grid on; 
+title('velocity'); 
+hold on; 
 plot([1 model.N], [model.ub(5) model.ub(5)]', 'r:');
 plot([1 model.N], [model.lb(5) model.lb(5)]', 'r:');
-subplot(2,1,2); plot(rad2deg(X(4,:))); grid on; title('heading angle'); ylim([0, 180]); hold on; 
+subplot(2,1,2); 
+plot(rad2deg(X(4,:))); 
+grid on; 
+title('heading angle'); 
+ylim([0, 180]); 
+hold on; 
 plot([1 model.N], rad2deg([model.ub(6) model.ub(6)])', 'r:');
 plot([1 model.N], rad2deg([model.lb(6) model.lb(6)])', 'r:');
 

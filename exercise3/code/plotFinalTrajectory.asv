@@ -6,8 +6,6 @@ dataFolder = {'data', filesep};
 loadString = ["data_100_0,1_0,01", "data_100_10_0,01"];
 legendString = ["100, 0.1, 0.01", "100, 10, 0.01"];
 
-pathFig = ['fig', filesep];
-
 dim = [200, 200, 500, 400];
 fontSize = 15;
 lineWidth = 2;
@@ -25,10 +23,10 @@ for i = 1:length(loadString)
         f1 = plot_enviroment(hl, hu, xinit, dim);
         f2 = plot_velocity(lb, ub, N, dim);
     end
-    figure(1);
+    f1;
     h(i) = plot(X(1,:),X(2,:),'color',i/2 * color(i,:) , 'LineWidth',lineWidth);
     
-    figure(2);
+    f2;
     subplot(2,1,1); 
     plot(X(3,:)); 
     
@@ -40,9 +38,9 @@ f1;
 legend(h, legendString, 'Location','southeast');
 set(gca,'fontsize', fontSize);
 
-f2;
-legend(h, legendString, 'Location','southeast');
-set(gca,'fontsize', fontSize);
+f2
+
+pathFig = ['fig', filesep];
 
 saveas(gcf, [pathFig, 'position'], 'jpg');
 saveas(gcf, [pathFig, 'position','.eps'], 'epsc');

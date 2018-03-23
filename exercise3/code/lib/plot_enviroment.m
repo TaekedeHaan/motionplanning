@@ -1,4 +1,4 @@
-function plotEnviroment(hl, hu, xinit, fontSize, dim)
+function f1 = plot_enviroment(hl, hu, xinit, dim)
 
 pathFig = [pwd, filesep, 'fig' filesep];
 
@@ -7,7 +7,8 @@ colorBlue = [0, 0.4470, 0.7410]; % blue, used for plotting
 colorGrey = 0.8*[1, 1, 1]; % grey, used for plotting
 colorWhite = [1, 1, 1];
 % plot trajectory
-figure(1); clf;
+f1 = figure(1);
+set(f1,'Position', dim); 
 rectangle('Position', [-4, -1, 5, 5], 'FaceColor',colorGrey);
 rectangle('Position',[-sqrt(hu(1)) -sqrt(hu(1)) 2*sqrt(hu(1)) 2*sqrt(hu(1))],'Curvature',[1 1],'EdgeColor',colorGrey,'FaceColor',colorWhite,'LineWidth',1);
 rectangle('Position',[-sqrt(hl(1)) -sqrt(hl(1)) 2*sqrt(hl(1)) 2*sqrt(hl(1))],'Curvature',[1 1],'EdgeColor',colorGrey,'FaceColor',colorGrey,'LineWidth',1); hold on
@@ -20,6 +21,6 @@ grid on
 grid minor
 ax = gca;
 ax.Layer = 'top';
-set(gca,'fontsize', fontSize);
+
 end
 
