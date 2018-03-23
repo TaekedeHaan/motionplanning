@@ -39,17 +39,17 @@ solver_int32_default FORCESNLPsolver_model_50(const FORCESNLPsolver_float **arg,
 {
     FORCESNLPsolver_float a0,a1,a2,a3,a4,a5,a6,a7;
     
-    a0=-100.;
+    a0=-200.;
     a1=arg[0] ? arg[0][3] : 0;
     a2=(a0*a1);
     a3=arg[0] ? arg[0][0] : 0;
     a4=sq(a3);
-    a5=1.0000000000000001e-001;
+    a5=1.0000000000000000e-003;
     a4=(a5*a4);
     a2=(a2+a4);
     a4=arg[0] ? arg[0][1] : 0;
     a6=sq(a4);
-    a7=1.0000000000000000e-002;
+    a7=1.0000000000000000e-004;
     a6=(a7*a6);
     a2=(a2+a6);
     if (res[0]!=0) res[0][0]=a2;

@@ -16,7 +16,11 @@ rectangle('Position',[-sqrt(hl(1)) -sqrt(hl(1)) 2*sqrt(hl(1)) 2*sqrt(hl(1))],'Cu
 rectangle('Position',[-2-sqrt(hl(2)) 2.5-sqrt(hl(2)) 2*sqrt(hl(2)) 2*sqrt(hl(2))],'Curvature',[1 1],'EdgeColor',colorGrey,'FaceColor',colorGrey,'LineWidth',1);
 plot(xinit(1),xinit(2),'bx','LineWidth',3);  hold on; 
 
-title('position'); xlim([-3 0]); ylim([0 3]); xlabel('x position'); ylabel('y position');
+title('position'); 
+xlim([-3 0]); 
+ylim([0 3]); 
+xlabel('x position'); 
+ylabel('y position');
 grid on
 grid minor
 ax = gca;
