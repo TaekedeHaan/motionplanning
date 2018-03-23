@@ -1,9 +1,17 @@
-function plot_inputs
+function f3 = plot_inputs(lb, ub, N, dim)
 
-figure(3); clf;
-subplot(2,1,1); stairs(U(1,:)); grid on; title('acceleration force'); hold on; 
-plot([1 model.N], [model.ub(1) model.ub(1)]', 'r:');
-plot([1 model.N], [model.lb(1) model.lb(1)]', 'r:');
-subplot(2,1,2); stairs(U(2,:)); grid on; title('delta steering'); hold on; 
-plot([1 model.N], [model.ub(2) model.ub(2)]', 'r:');
-plot([1 model.N], [model.lb(2) model.lb(2)]', 'r:');
+f3 = figure(3); clf;
+set(f3,'Position', dim); 
+subplot(2,1,1); 
+grid on; 
+title('acceleration force'); 
+hold on; 
+plot([1 N], [ub(1) ub(1)]', 'r:');
+plot([1 N], [lb(1) lb(1)]', 'r:');
+
+subplot(2,1,2); 
+grid on; 
+title('delta steering'); 
+hold on; 
+plot([1 N], [ub(2) ub(2)]', 'r:');
+plot([1 N], [lb(2) lb(2)]', 'r:');

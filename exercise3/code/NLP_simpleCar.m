@@ -162,7 +162,7 @@ lb = model.lb;
 ub = model.ub;
 N = model.N;
 xinit = model.xinit;
-save(['data', filesep, 'data', fileID,'.mat'], 'fileID', 'hl', 'hu', 'lb', 'ub', 'N', 'xinit', 'X');
+save(['data', filesep, 'data', fileID,'.mat'], 'fileID', 'hl', 'hu', 'lb', 'ub', 'N', 'xinit', 'X', 'U');
 
 % plot heading angle and velocity variables
 figure(2); clf;
