@@ -1,0 +1,542 @@
+classdef StabilizedQpSolver < casadi.Function
+    %StabilizedQpSolver.
+    %
+    %Solves the following strictly convex problem:
+    %
+    %
+    %
+    %::
+    %
+    %  min          1/2 x' H x + g' x
+    %  x
+    %  
+    %  subject to
+    %  LBA <= A x <= UBA
+    %  LBX <= x   <= UBX
+    %  
+    %  with :
+    %  H sparse (n x n) positive definite
+    %  g dense  (n x 1)
+    %  
+    %  n: number of decision variables (x)
+    %  nc: number of constraints (A)
+    %
+    %
+    %
+    %If H is not positive-definite, the solver should throw an error.
+    %
+    %General information
+    %===================
+    %
+    %
+    %
+    %>Input scheme: casadi::StabilizedQpSolverInput (STABILIZED_QP_SOLVER_NUM_IN = 12) [stabilizedQpIn]
+    %
+    %+------------------------+------------------------+------------------------+
+    %|       Full name        |         Short          |      Description       |
+    %+========================+========================+========================+
+    %| STABILIZED_QP_SOLVER_H | h                      | The square matrix H:   |
+    %|                        |                        | sparse, (n x n). Only  |
+    %|                        |                        | the lower triangular   |
+    %|                        |                        | part is actually used. |
+    %|                        |                        | The matrix is assumed  |
+    %|                        |                        | to be symmetrical.     |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_G | g                      | The vector g: dense,   |
+    %|                        |                        | (n x 1) .              |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_A | a                      | The matrix A: sparse,  |
+    %|                        |                        | (nc x n) - product     |
+    %|                        |                        | with x must be dense.  |
+    %|                        |                        | .                      |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_L | lba                    | dense, (nc x 1)        |
+    %| BA                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_U | uba                    | dense, (nc x 1)        |
+    %| BA                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_L | lbx                    | dense, (n x 1)         |
+    %| BX                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_U | ubx                    | dense, (n x 1)         |
+    %| BX                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_X | x0                     | dense, (n x 1)         |
+    %| 0                      |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_L | lam_x0                 | dense                  |
+    %| AM_X0                  |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_M | muR                    | dense (1 x 1)          |
+    %| UR                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_M | muE                    | dense (nc x 1)         |
+    %| UE                     |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %| STABILIZED_QP_SOLVER_M | mu                     | dense (nc x 1)         |
+    %| U                      |                        |                        |
+    %+------------------------+------------------------+------------------------+
+    %
+    %>Output scheme: casadi::QpSolverOutput (QP_SOLVER_NUM_OUT = 4) [qpOut]
+    %
+    %+------------------------+------------------------+------------------------+
+    %|       Full name        |         Short          |      Description       |
+    %+========================+========================+========================+
+    %| QP_SOLVER_X            | x                      | The primal solution .  |
+    %+------------------------+------------------------+------------------------+
+    %| QP_SOLVER_COST         | cost                   | The optimal cost .     |
+    %+------------------------+------------------------+------------------------+
+    %| QP_SOLVER_LAM_A        | lam_a                  | The dual solution      |
+    %|                        |                        | corresponding to       |
+    %|                        |                        | linear bounds .        |
+    %+------------------------+------------------------+------------------------+
+    %| QP_SOLVER_LAM_X        | lam_x                  | The dual solution      |
+    %|                        |                        | corresponding to       |
+    %|                        |                        | simple bounds .        |
+    %+------------------------+------------------------+------------------------+
+    %
+    %>List of available options
+    %
+    %+--------------+--------------+--------------+--------------+--------------+
+    %|      Id      |     Type     |   Default    | Description  |   Used in    |
+    %+==============+==============+==============+==============+==============+
+    %| ad_weight    | OT_REAL      | GenericType( | Weighting    | casadi::Func |
+    %|              |              | )            | factor for   | tionInternal |
+    %|              |              |              | derivative c |              |
+    %|              |              |              | alculation.W |              |
+    %|              |              |              | hen there is |              |
+    %|              |              |              | an option of |              |
+    %|              |              |              | either using |              |
+    %|              |              |              | forward or   |              |
+    %|              |              |              | reverse mode |              |
+    %|              |              |              | directional  |              |
+    %|              |              |              | derivatives, |              |
+    %|              |              |              | the          |              |
+    %|              |              |              | condition ad |              |
+    %|              |              |              | _weight*nf<= |              |
+    %|              |              |              | (1-ad_weight |              |
+    %|              |              |              | )*na is used |              |
+    %|              |              |              | where nf and |              |
+    %|              |              |              | na are       |              |
+    %|              |              |              | estimates of |              |
+    %|              |              |              | the number   |              |
+    %|              |              |              | of forward/r |              |
+    %|              |              |              | everse mode  |              |
+    %|              |              |              | directional  |              |
+    %|              |              |              | derivatives  |              |
+    %|              |              |              | needed. By   |              |
+    %|              |              |              | default,     |              |
+    %|              |              |              | ad_weight is |              |
+    %|              |              |              | calculated a |              |
+    %|              |              |              | utomatically |              |
+    %|              |              |              | , but this   |              |
+    %|              |              |              | can be       |              |
+    %|              |              |              | overridden   |              |
+    %|              |              |              | by setting   |              |
+    %|              |              |              | this option. |              |
+    %|              |              |              | In           |              |
+    %|              |              |              | particular,  |              |
+    %|              |              |              | 0 means      |              |
+    %|              |              |              | forcing      |              |
+    %|              |              |              | forward mode |              |
+    %|              |              |              | and 1        |              |
+    %|              |              |              | forcing      |              |
+    %|              |              |              | reverse      |              |
+    %|              |              |              | mode. Leave  |              |
+    %|              |              |              | unset for    |              |
+    %|              |              |              | (class       |              |
+    %|              |              |              | specific)    |              |
+    %|              |              |              | heuristics.  |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| ad_weight_sp | OT_REAL      | GenericType( | Weighting    | casadi::Func |
+    %|              |              | )            | factor for   | tionInternal |
+    %|              |              |              | sparsity     |              |
+    %|              |              |              | pattern      |              |
+    %|              |              |              | calculation  |              |
+    %|              |              |              | calculation. |              |
+    %|              |              |              | Overrides    |              |
+    %|              |              |              | default      |              |
+    %|              |              |              | behavior.    |              |
+    %|              |              |              | Set to 0 and |              |
+    %|              |              |              | 1 to force   |              |
+    %|              |              |              | forward and  |              |
+    %|              |              |              | reverse mode |              |
+    %|              |              |              | respectively |              |
+    %|              |              |              | . Cf. option |              |
+    %|              |              |              | "ad_weight". |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| compiler     | OT_STRING    | "clang"      | Just-in-time | casadi::Func |
+    %|              |              |              | compiler     | tionInternal |
+    %|              |              |              | plugin to be |              |
+    %|              |              |              | used.        |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| custom_forwa | OT_DERIVATIV | GenericType( | Function     | casadi::Func |
+    %| rd           | EGENERATOR   | )            | that returns | tionInternal |
+    %|              |              |              | a derivative |              |
+    %|              |              |              | function     |              |
+    %|              |              |              | given a      |              |
+    %|              |              |              | number of    |              |
+    %|              |              |              | forward mode |              |
+    %|              |              |              | directional  |              |
+    %|              |              |              | derivatives. |              |
+    %|              |              |              | Overrides    |              |
+    %|              |              |              | default      |              |
+    %|              |              |              | routines.    |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| custom_rever | OT_DERIVATIV | GenericType( | Function     | casadi::Func |
+    %| se           | EGENERATOR   | )            | that returns | tionInternal |
+    %|              |              |              | a derivative |              |
+    %|              |              |              | function     |              |
+    %|              |              |              | given a      |              |
+    %|              |              |              | number of    |              |
+    %|              |              |              | reverse mode |              |
+    %|              |              |              | directional  |              |
+    %|              |              |              | derivatives. |              |
+    %|              |              |              | Overrides    |              |
+    %|              |              |              | default      |              |
+    %|              |              |              | routines.    |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| defaults_rec | OT_STRINGVEC | GenericType( | Changes      | casadi::Opti |
+    %| ipes         | TOR          | )            | default      | onsFunctiona |
+    %|              |              |              | options      | lityNode   c |
+    %|              |              |              | according to | asadi::Stabi |
+    %|              |              |              | a given      | lizedQpSolve |
+    %|              |              |              | recipe (low- | rInternal    |
+    %|              |              |              | level)  (qp) |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| full_jacobia | OT_FUNCTION  | GenericType( | The Jacobian | casadi::Func |
+    %| n            |              | )            | of all       | tionInternal |
+    %|              |              |              | outputs with |              |
+    %|              |              |              | respect to   |              |
+    %|              |              |              | all inputs.  |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| gather_stats | OT_BOOLEAN   | false        | Flag to      | casadi::Func |
+    %|              |              |              | indicate     | tionInternal |
+    %|              |              |              | whether      |              |
+    %|              |              |              | statistics   |              |
+    %|              |              |              | must be      |              |
+    %|              |              |              | gathered     |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| input_scheme | OT_STRINGVEC | GenericType( | Custom input | casadi::Func |
+    %|              | TOR          | )            | scheme       | tionInternal |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| inputs_check | OT_BOOLEAN   | true         | Throw        | casadi::Func |
+    %|              |              |              | exceptions   | tionInternal |
+    %|              |              |              | when the     |              |
+    %|              |              |              | numerical    |              |
+    %|              |              |              | values of    |              |
+    %|              |              |              | the inputs   |              |
+    %|              |              |              | don't make   |              |
+    %|              |              |              | sense        |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| jac_penalty  | OT_REAL      | 2            | When         | casadi::Func |
+    %|              |              |              | requested    | tionInternal |
+    %|              |              |              | for a number |              |
+    %|              |              |              | of forward/r |              |
+    %|              |              |              | everse       |              |
+    %|              |              |              | directions,  |              |
+    %|              |              |              | it may be    |              |
+    %|              |              |              | cheaper to   |              |
+    %|              |              |              | compute      |              |
+    %|              |              |              | first the    |              |
+    %|              |              |              | full         |              |
+    %|              |              |              | jacobian and |              |
+    %|              |              |              | then         |              |
+    %|              |              |              | multiply     |              |
+    %|              |              |              | with seeds,  |              |
+    %|              |              |              | rather than  |              |
+    %|              |              |              | obtain the   |              |
+    %|              |              |              | requested    |              |
+    %|              |              |              | directions   |              |
+    %|              |              |              | in a straigh |              |
+    %|              |              |              | tforward     |              |
+    %|              |              |              | manner.      |              |
+    %|              |              |              | Casadi uses  |              |
+    %|              |              |              | a heuristic  |              |
+    %|              |              |              | to decide    |              |
+    %|              |              |              | which is     |              |
+    %|              |              |              | cheaper. A   |              |
+    %|              |              |              | high value   |              |
+    %|              |              |              | of 'jac_pena |              |
+    %|              |              |              | lty' makes   |              |
+    %|              |              |              | it less      |              |
+    %|              |              |              | likely for   |              |
+    %|              |              |              | the heurstic |              |
+    %|              |              |              | to chose the |              |
+    %|              |              |              | full         |              |
+    %|              |              |              | Jacobian     |              |
+    %|              |              |              | strategy.    |              |
+    %|              |              |              | The special  |              |
+    %|              |              |              | value -1     |              |
+    %|              |              |              | indicates    |              |
+    %|              |              |              | never to use |              |
+    %|              |              |              | the full     |              |
+    %|              |              |              | Jacobian     |              |
+    %|              |              |              | strategy     |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| jit          | OT_BOOLEAN   | false        | Use just-in- | casadi::Func |
+    %|              |              |              | time         | tionInternal |
+    %|              |              |              | compiler to  |              |
+    %|              |              |              | speed up the |              |
+    %|              |              |              | evaluation   |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| jit_options  | OT_DICT      | GenericType( | Options to   | casadi::Func |
+    %|              |              | )            | be passed to | tionInternal |
+    %|              |              |              | the jit      |              |
+    %|              |              |              | compiler.    |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| monitor      | OT_STRINGVEC | GenericType( | Monitors to  | casadi::Func |
+    %|              | TOR          | )            | be activated | tionInternal |
+    %|              |              |              | (inputs|outp |              |
+    %|              |              |              | uts)         |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| name         | OT_STRING    | "unnamed_sha | name of the  | casadi::Opti |
+    %|              |              | red_object"  | object       | onsFunctiona |
+    %|              |              |              |              | lityNode     |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| output_schem | OT_STRINGVEC | GenericType( | Custom       | casadi::Func |
+    %| e            | TOR          | )            | output       | tionInternal |
+    %|              |              |              | scheme       |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| regularity_c | OT_BOOLEAN   | true         | Throw        | casadi::Func |
+    %| heck         |              |              | exceptions   | tionInternal |
+    %|              |              |              | when NaN or  |              |
+    %|              |              |              | Inf appears  |              |
+    %|              |              |              | during       |              |
+    %|              |              |              | evaluation   |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| user_data    | OT_VOIDPTR   | GenericType( | A user-      | casadi::Func |
+    %|              |              | )            | defined      | tionInternal |
+    %|              |              |              | field that   |              |
+    %|              |              |              | can be used  |              |
+    %|              |              |              | to identify  |              |
+    %|              |              |              | the function |              |
+    %|              |              |              | or pass      |              |
+    %|              |              |              | additional   |              |
+    %|              |              |              | information  |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %| verbose      | OT_BOOLEAN   | false        | Verbose      | casadi::Func |
+    %|              |              |              | evaluation   | tionInternal |
+    %|              |              |              | for          |              |
+    %|              |              |              | debugging    |              |
+    %+--------------+--------------+--------------+--------------+--------------+
+    %
+    %List of plugins
+    %===============
+    %
+    %
+    %
+    %- sqic
+    %
+    %- qp
+    %
+    %Note: some of the plugins in this list might not be available on your
+    %system. Also, there might be extra plugins available to you that are not
+    %listed here. You can obtain their documentation with
+    %StabilizedQpSolver.doc("myextraplugin")
+    %
+    %
+    %
+    %--------------------------------------------------------------------------------
+    %
+    %sqic
+    %----
+    %
+    %
+    %
+    %Interface to SQIC
+    %
+    %>List of available options
+    %
+    %+----+------+---------+-------------+
+    %| Id | Type | Default | Description |
+    %+====+======+=========+=============+
+    %+----+------+---------+-------------+
+    %
+    %--------------------------------------------------------------------------------
+    %
+    %
+    %
+    %--------------------------------------------------------------------------------
+    %
+    %qp --
+    %
+    %
+    %
+    %Solved a stabilized QP using a standard QP solver
+    %
+    %>List of available options
+    %
+    %+-----------------+-----------------+-----------------+-----------------+
+    %|       Id        |      Type       |     Default     |   Description   |
+    %+=================+=================+=================+=================+
+    %| qp_solver       | OT_STRING       | GenericType()   | The QP solver   |
+    %|                 |                 |                 | used to solve   |
+    %|                 |                 |                 | the stabilized  |
+    %|                 |                 |                 | QPs.            |
+    %+-----------------+-----------------+-----------------+-----------------+
+    %| qp_solver_optio | OT_DICT         | GenericType()   | Options to be   |
+    %| ns              |                 |                 | passed to the   |
+    %|                 |                 |                 | QP solver       |
+    %|                 |                 |                 | instance        |
+    %+-----------------+-----------------+-----------------+-----------------+
+    %
+    %>List of available stats
+    %
+    %+-----------------+
+    %|       Id        |
+    %+=================+
+    %| qp_solver_stats |
+    %+-----------------+
+    %
+    %--------------------------------------------------------------------------------
+    %
+    %
+    %
+    %Joel Andersson
+    %Diagrams
+    %--------
+    %
+    %
+    %
+    %C++ includes: stabilized_qp_solver.hpp 
+    %Usage: StabilizedQpSolver ()
+    %
+  methods
+    function varargout = generateNativeCode(self,varargin)
+    %Generate native code in the interfaced language for debugging
+    %
+    %
+    %Usage: generateNativeCode (filename)
+    %
+    %filename is of type std::string const &. 
+
+      try
+
+      if ~isa(self,'casadi.StabilizedQpSolver')
+        self = casadi.StabilizedQpSolver(self);
+      end
+      [varargout{1:nargout}] = casadiMEX(1015, self, varargin{:});
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+    end
+    function self = StabilizedQpSolver(varargin)
+      self@casadi.Function(SwigRef.Null);
+      if nargin==1 && strcmp(class(varargin{1}),'SwigRef')
+        if varargin{1}~=SwigRef.Null
+          self.swigPtr = varargin{1}.swigPtr;
+        end
+      else
+
+      try
+
+        tmp = casadiMEX(1017, varargin{:});
+        self.swigPtr = tmp.swigPtr;
+        tmp.swigPtr = [];
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+      end
+    end
+    function delete(self)
+      if self.swigPtr
+        casadiMEX(1018, self);
+        self.swigPtr=[];
+      end
+    end
+  end
+  methods(Static)
+    function varargout = hasPlugin(varargin)
+    %Usage: retval = hasPlugin (name)
+    %
+    %name is of type std::string const &. name is of type std::string const &. retval is of type bool. 
+
+      try
+
+      [varargout{1:max(1,nargout)}] = casadiMEX(1012, varargin{:});
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+    end
+    function varargout = loadPlugin(varargin)
+    %Usage: loadPlugin (name)
+    %
+    %name is of type std::string const &. 
+
+      try
+
+      [varargout{1:nargout}] = casadiMEX(1013, varargin{:});
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+    end
+    function varargout = doc(varargin)
+    %Usage: retval = doc (name)
+    %
+    %name is of type std::string const &. name is of type std::string const &. retval is of type std::string. 
+
+      try
+
+      [varargout{1:max(1,nargout)}] = casadiMEX(1014, varargin{:});
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+    end
+    function varargout = testCast(varargin)
+    %Usage: retval = testCast (ptr)
+    %
+    %ptr is of type casadi::SharedObjectNode const *. ptr is of type casadi::SharedObjectNode const *. retval is of type bool. 
+
+      try
+
+      [varargout{1:max(1,nargout)}] = casadiMEX(1016, varargin{:});
+
+      catch err
+        if (strcmp(err.identifier,'SWIG:OverloadError'))
+          msg = [swig_typename_convertor_cpp2matlab(err.message) 'You have: ' strjoin(cellfun(@swig_typename_convertor_matlab2cpp,varargin,'UniformOutput',false),', ')];
+          throwAsCaller(MException(err.identifier,msg));
+        else
+          rethrow(err);
+        end
+      end
+
+    end
+  end
+end

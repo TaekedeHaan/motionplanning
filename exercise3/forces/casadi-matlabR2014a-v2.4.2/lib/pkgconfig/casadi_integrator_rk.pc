@@ -1,0 +1,12 @@
+prefix=/home/travis/build/casadi/binaries/casadi/matlab_install
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: casadi_integrator_rk
+Description: CasADi is a symbolic framework for automatic differentation and numeric optimization ( module casadi_integrator_rk )
+URL: http://casadi.org
+Version: 2.4.2
+Requires: casadi,casadi_integrators
+Libs: -L${libdir} -lcasadi_integrator_rk
+Cflags: -I${includedir}
