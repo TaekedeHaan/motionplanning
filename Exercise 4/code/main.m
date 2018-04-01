@@ -63,13 +63,13 @@ pattern4 = simpleMassDistribution(0);
 [t4,y4,dens4,zm4] = Lloyd(pattern4, y3(:,end), [t3(end) 4*patternTime], par);
 zeroMass{4} = zm4;
 %%
-for i =1
+for i = 2
     
 disp('Computing pattern 5 ...')
-%pattern5 = simpleMassDistribution(2, [1.0e10; 1.0e10], [0.1; 0.1], [0.7 0.7; 0.3 0.3], [1; 1]);
 pattern5 = imageMassDensity('stars.mat',i);
 [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime + 2.5], par);
 zeroMass{5} = zm5;
+
 
 % combine
 t = [t1(1:end-1) t2(1:end-1) t3(1:end-1) t4(1:end-1) t5];

@@ -53,6 +53,7 @@ end
 if any(isnan(Lv))
     disp('Nan in centroidNUmerical.m...')
 end
+
 end
 
 
