@@ -33,32 +33,10 @@ for x = xmin+xstep/2:xstep:xmax-xstep/2
         phiFcn(i, 1:2) = q';
         if inpolygon(q(1), q(2), V(:,1), V(:,2))
             phiq = massFcn(q(1),q(2));
-            
-            Mblock =xstep*ystep*phiq;
-            
-            % compute total mass 
-            Mv = Mv + Mblock; 
-            
-            % compute total moment
-            Lv = Lv + q * Mblock;
-
+            Mv = Mv + TODO; % mass
+            Lv = Lv + TODO; % moment
             phiFcn(i, 3) = phiq;
         end
         i = i+1;
     end
-      
-            
 end
-
-if any(isnan(Lv))
-    disp('Nan in centroidNUmerical.m...')
-end
-end
-
-
-%check centers
-% close all
-% figure(1);scatter(V(:,1),V(:,2));hold on; scatter(Lv(1),Lv(2));hold on;legend('V','Lv')
-% grid on
-% disp('jatog')
-            

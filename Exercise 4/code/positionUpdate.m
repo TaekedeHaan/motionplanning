@@ -1,5 +1,6 @@
 function posNew = positionUpdate(posOld, u, par)
-dt = par.dt;
-posNew = posOld + dt*u;
 
+% update position
+posNew = posOld + par.dt*u;
 
+end

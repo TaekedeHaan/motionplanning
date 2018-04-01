@@ -28,7 +28,6 @@ positions = reshape(y0,[N 2]);
 y = zeros(2*N,length(t));
 densityField = zeros(par.res^2,3,N,length(t));
 posZeroM = [];
-count =0;
 for ti = 1:length(t)
     y(:,ti) = positions(:);
     inputs = zeros(size(positions));
@@ -36,7 +35,7 @@ for ti = 1:length(t)
     for i = 1:N
         posRi = positions(i,:)';
         
-        % calculate Voronoi        
+        % calculate Voronoi
         V = Voronoi(positions, posRi, par);
         
         % calculate centeroids
@@ -46,8 +45,6 @@ for ti = 1:length(t)
         % robot control
         inputs(i,:) = controlLaw(posRi, Mv, Lv);
         
-        %disp('')
-        
         if ti == 1 && Mv == 0 % Calculated zero mass over Voronoi region
             posZeroM = [posZeroM; posRi'];
         end
@@ -55,6 +52,5 @@ for ti = 1:length(t)
     
     % update robot positions
     positions = positionUpdate(positions, inputs, par);
-
 end
 zmPoints = [tspan(:); posZeroM(:)];
