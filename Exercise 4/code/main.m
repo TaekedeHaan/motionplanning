@@ -27,6 +27,15 @@ par = struct('boudary', [0 0;0 1;1 1;1 0],...   % field boudary
              'res',     10,...          % centroid calulation resolution
              'dt',      0.1);           % time step [s]
 N = par.N;
+par.diffDrive = false;
+par.Krho = 0.5;
+par.Kalpha = 1.5;
+par.Kbeta = -0.6;
+
+par.wheelRadius = 0.25/2.0;
+par.interWheelDistance = 0.25;
+
+testFull = true; 
 
 patternTime = 2; % duration per goal pattern
 
@@ -38,7 +47,14 @@ yub = max(par.boudary(:,2));
 
 % initial conditions
 rng('shuffle', 'twister');
-y0 = rand(2*N,1);
+
+if par.diffDrive
+    par.posSize = 3;
+else
+    par.posSize = 2;
+end
+
+y0 = rand(par.posSize*N,1);
 
 %% Pattern control
 zeroMass = cell(5,1);
@@ -53,28 +69,35 @@ pattern2 = simpleMassDistribution(3,   1.0e6, [0.1 0.1], [0.5 0.5], 0.1);
 [t2,y2,dens2,zm2] = Lloyd(pattern2, y1(:,end), [t1(end) 2*patternTime], par);
 zeroMass{2} = zm2;
 
-disp('Computing pattern 3 ...')
-pattern3 = simpleMassDistribution(2,   3.0e8, 0.1, [0.5 0.5], 1);
-[t3,y3,dens3,zm3] = Lloyd(pattern3, y2(:,end), [t2(end) 3*patternTime], par);
-zeroMass{3} = zm3;
+if testFull
+    disp('Computing pattern 3 ...')
+    pattern3 = simpleMassDistribution(2,   3.0e8, 0.1, [0.5 0.5], 1);
+    [t3,y3,dens3,zm3] = Lloyd(pattern3, y2(:,end), [t2(end) 3*patternTime], par);
+    zeroMass{3} = zm3;
 
-disp('Computing pattern 4 ...')
-pattern4 = simpleMassDistribution(0);
-[t4,y4,dens4,zm4] = Lloyd(pattern4, y3(:,end), [t3(end) 4*patternTime], par);
-zeroMass{4} = zm4;
-%%
-for i = 2
-    
-disp('Computing pattern 5 ...')
-pattern5 = imageMassDensity('stars.mat',i);
-[t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime + 2.5], par);
-zeroMass{5} = zm5;
+    disp('Computing pattern 4 ...')
+    pattern4 = simpleMassDistribution(0);
+    [t4,y4,dens4,zm4] = Lloyd(pattern4, y3(:,end), [t3(end) 4*patternTime], par);
+    zeroMass{4} = zm4;
 
+
+    i = 2;
+
+    disp('Computing pattern 5 ...')
+    pattern5 = imageMassDensity('stars.mat',i);
+    [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime + 2.5], par);
+    zeroMass{5} = zm5;
+end
 
 % combine
-t = [t1(1:end-1) t2(1:end-1) t3(1:end-1) t4(1:end-1) t5];
-y = [y1(:,1:end-1) y2(:,1:end-1) y3(:,1:end-1) y4(:,1:end-1) y5];
-
+if testFull
+    t = [t1(1:end-1) t2(1:end-1) t3(1:end-1) t4(1:end-1) t5];
+    y = [y1(:,1:end-1) y2(:,1:end-1) y3(:,1:end-1) y4(:,1:end-1) y5];
+else
+    t = [t1(1:end-1) t2];
+    y = [y1(:,1:end-1) y2];
+end
+    
 %% Visualisation
 %% animate robot trajectories
 if options.animation
@@ -142,4 +165,3 @@ for k = 1:N
 end
 axis equal;
 axis([xlb xub ylb yub 0 1]);
-end

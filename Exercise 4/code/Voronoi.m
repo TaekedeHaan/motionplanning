@@ -10,14 +10,11 @@ function [V0, NI] = Voronoi(P0, p0, par)
 % of all the other robots P 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 % Constants
 Limit = 10;
 tol = 1e-6;
 n = length(P0(:,1))-1;
 p0 = p0';
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Find Distance and sort
@@ -77,6 +74,7 @@ while i<=n && (2*d>D(i) || LSize>VSize)
         I = I(1:VSize);
         V0 = V0(I,:);
     end
+    
     % Get rid of lines not containing any points in V0
     Test = abs(Lines*[V0, ones(VSize,1)]')>=tol'; % zero indicates a V0 point on a Line
     Test = cast(Test, 'double')';
@@ -88,6 +86,7 @@ while i<=n && (2*d>D(i) || LSize>VSize)
     I = I(1:LSize);
     Lines = Lines(I,:);
     NI = NI(I); % filter out indices of non-Voronoi Neighbors 
+    
     % Max distance point in V0
     d = max(sqrt((V0(:,1)-p0(1)).^2 + (V0(:,2)-p0(2)).^2));
     % Increment

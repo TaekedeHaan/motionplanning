@@ -1,6 +1,7 @@
-function [ vu, omega ] = controlLawDiff( posRi, Mv, Lv, parameters )
+function u = controlLawDiff( posRi, Mv, Lv, par)
 %CALCULATECONTROLOUTPUT This function computes the motor velocities for a differential driven robot
-backwardAllowed = true;
+backwardAllowed = false;
+par.useConstantSpeed = false;
 
 if Mv == 0
     Cv = [0 , 0]'; % ?
@@ -37,14 +38,16 @@ end
 
 % the following paramerters should be used:
 % Task 2:
-vu = direction * parameters.Krho * rho; % [m/s]
-omega = parameters.Kalpha * alpha + parameters.Kbeta * beta; % [rad/s]
+vu = direction * par.Krho * rho; % [m/s]
+omega = par.Kalpha * alpha + par.Kbeta * beta; % [rad/s]
 
-if parameters.useConstantSpeed
+if par.useConstantSpeed
     vu1 = vu;
-    vu = direction * parameters.constantSpeed;
+    vu = direction * par.constantSpeed;
     omega1 = omega;
     omega = omega1 * vu/(vu1);
 end
+
+u = [vu omega];
 end
 

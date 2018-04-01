@@ -1,11 +1,16 @@
-function [ LeftWheelVelocity, RightWheelVelocity ] = positionUpdateDiff( vu, omega, parameters )
+function posNew = positionUpdateDiff(posOld, u, par )
 %CALCULATEWHEELSPEEDS This function computes the motor velocities for a differential driven robot
 
-wheelRadius = 0.05; %[m]
-halfWheelbase = 0.20/2; %[m]
+vx = u(:,1) * cos(posOld(3));
+vy = u(:,1) * sin(posOld(3));
+omega = u(:,2);
+velocity = [vx, vy, omega];
 
-LeftWheelVelocity = 1/wheelRadius * (vu - halfWheelbase * omega);
-RightWheelVelocity = 1/wheelRadius * (vu + halfWheelbase * omega);
+% wheelRadius = par.wheelRadius; %[m]
+% halfWheelbase = par.interWheelDistance/2; %[m]
 
-%(r + halfWheelbase)/(r - halfWheelbase) * LeftWheelVelocity;
+% LeftWheelVelocity = 1/wheelRadius * (vu - halfWheelbase * omega);
+% RightWheelVelocity = 1/wheelRadius * (vu + halfWheelbase * omega);
+
+posNew = posOld + par.dt * velocity;
 end

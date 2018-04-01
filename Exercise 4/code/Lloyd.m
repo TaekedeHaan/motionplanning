@@ -19,34 +19,37 @@ function [t,y,densityField,zmPoints] = Lloyd(massFcn, y0, tspan, par)
 %
 % Author: Linda van der Spaa, TU Delft, 2018
 
+
 N = par.N;
 dt = par.dt;
 t = tspan(1):dt:tspan(2);
 
-positions = reshape(y0,[N 2]);
+positions = reshape(y0,[N par.posSize]);
 
-y = zeros(2*N,length(t));
+y = zeros(par.posSize*N,length(t));
 densityField = zeros(par.res^2,3,N,length(t));
 posZeroM = [];
 count =0;
 for ti = 1:length(t)
     y(:,ti) = positions(:);
-    inputs = zeros(size(positions));
+    inputs = zeros(size(positions,1),2);
     
     for i = 1:N
         posRi = positions(i,:)';
         
         % calculate Voronoi        
-        V = Voronoi(positions, posRi, par);
+        V = Voronoi(positions(:,1:2), posRi(1:2), par);
         
         % calculate centeroids
         [Mv, Lv, phi] = centroidNumerical(V, massFcn, par);
         densityField(:,:,i,ti) = phi;
         
         % robot control
-        inputs(i,:) = controlLaw(posRi, Mv, Lv);
-        
-        %disp('')
+        if ~par.diffDrive
+            inputs(i,:) = controlLaw(posRi, Mv, Lv);
+        else
+          inputs(i,:) = controlLawDiff(posRi, Mv, Lv, par);
+        end
         
         if ti == 1 && Mv == 0 % Calculated zero mass over Voronoi region
             posZeroM = [posZeroM; posRi'];
@@ -54,7 +57,11 @@ for ti = 1:length(t)
     end
     
     % update robot positions
-    positions = positionUpdate(positions, inputs, par);
-
+    if ~par.diffDrive
+        positions = positionUpdate(positions, inputs, par);
+    else
+        positions = positionUpdateDiff(positions, inputs, par );
+    end
+    
 end
 zmPoints = [tspan(:); posZeroM(:)];
