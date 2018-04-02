@@ -27,18 +27,14 @@ par = struct('boudary', [0 0;0 1;1 1;1 0],...   % field boudary
              'res',     10,...          % centroid calulation resolution
              'dt',      0.1);           % time step [s]
 N = par.N;
-
-% parameters diff
 par.diffDrive = true;
-par.Krho = 2.5;
-par.Kalpha = 1.5;
-par.backwardAllowed = true;
-par.useConstantSpeed = false;
-par.constantSpeed = 0.1;
+par.Krho = 0.5;
+par.Kalpha = 0.5;
+par.Kbeta = -0.6;
 
 testFull = true; 
 
-patternTime = 2; % duration per goal pattern
+patternTime = 4; % duration per goal pattern
 
 % derived constants
 xlb = min(par.boudary(:,1));
@@ -82,11 +78,11 @@ if testFull
     zeroMass{4} = zm4;
 
 %%
-for i = 1
+for i = 3
 
     disp('Computing pattern 5 ...')
     pattern5 = imageMassDensity('stars.mat',i);
-    [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime], par);
+    [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime + ], par);
     zeroMass{5} = zm5;
 end
 

@@ -13,4 +13,29 @@ velocity = [vx, vy, omega];
 % RightWheelVelocity = 1/wheelRadius * (vu + halfWheelbase * omega);
 
 posNew = posOld + par.dt * velocity;
+
+%check boundary conditions
+xlb = min(par.boudary(:,1));
+xub = max(par.boudary(:,1));
+ylb = min(par.boudary(:,2));
+yub = max(par.boudary(:,2));
+
+for i =1:length(posNew)
+    
+    if posNew(i,1)< xlb
+        posNew(i,1) = xlb;
+    elseif posNew(i,1) > xub
+        posNew(i,1) = xub;
+    end
+    
+    if posNew(i,2)< ylb
+        posNew(i,2) = ylb;
+    elseif posNew(i,2) > yub
+        posNew(i,2) = yub;
+    end
+        
+end
+
+
+
 end
