@@ -26,8 +26,8 @@ lambda = atan2(yg-y, xg-x);     % angle of the vector pointing from the robot to
 alpha = lambda - theta;         % angle of the vector pointing from the robot to the goal in the robot frame
 alpha = normalizeAngle(alpha);
 
-beta = lambda; % + thetag;
-beta = normalizeAngle(beta);
+% beta = lambda; % + thetag;
+% beta = normalizeAngle(beta);
 
 % Task 3: backwards controller
 direction = 1; %default direnction is forward
@@ -39,7 +39,7 @@ end
 % the following paramerters should be used:
 % Task 2:
 vu = direction * par.Krho * rho; % [m/s]
-omega = par.Kalpha * alpha + par.Kbeta * beta; % [rad/s]
+omega = par.Kalpha * alpha; % [rad/s] + par.Kbeta * beta;
 
 if par.useConstantSpeed
     vu1 = vu;

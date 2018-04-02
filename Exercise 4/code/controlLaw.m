@@ -1,9 +1,6 @@
 function u = controlLaw(posRi, Mv, Lv)
 k = 5;
 
-
- 
-
 % determine centroid
 if Mv == 0
     u =0; 

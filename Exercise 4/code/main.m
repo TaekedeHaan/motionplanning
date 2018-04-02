@@ -27,17 +27,14 @@ par = struct('boudary', [0 0;0 1;1 1;1 0],...   % field boudary
              'res',     10,...          % centroid calulation resolution
              'dt',      0.1);           % time step [s]
 N = par.N;
-par.diffDrive = false;
-par.Krho = 0.5;
+par.diffDrive = true;
+par.Krho = 1.5;
 par.Kalpha = 1.5;
 par.Kbeta = -0.6;
 
-par.wheelRadius = 0.25/2.0;
-par.interWheelDistance = 0.25;
-
 testFull = true; 
 
-patternTime = 2; % duration per goal pattern
+patternTime = 4; % duration per goal pattern
 
 % derived constants
 xlb = min(par.boudary(:,1));
@@ -64,12 +61,12 @@ pattern1 = simpleMassDistribution(1,   6.0e5, 0.05, 0.5, 1);
 [t1,y1,dens1,zm1] = Lloyd(pattern1, y0, [0 patternTime], par);
 zeroMass{1} = zm1;
 
-disp('Computing pattern 2 ...')
-pattern2 = simpleMassDistribution(3,   1.0e6, [0.1 0.1], [0.5 0.5], 0.1);
-[t2,y2,dens2,zm2] = Lloyd(pattern2, y1(:,end), [t1(end) 2*patternTime], par);
-zeroMass{2} = zm2;
-
 if testFull
+    disp('Computing pattern 2 ...')
+    pattern2 = simpleMassDistribution(3,   1.0e6, [0.1 0.1], [0.5 0.5], 0.1);
+    [t2,y2,dens2,zm2] = Lloyd(pattern2, y1(:,end), [t1(end) 2*patternTime], par);
+    zeroMass{2} = zm2;
+    
     disp('Computing pattern 3 ...')
     pattern3 = simpleMassDistribution(2,   3.0e8, 0.1, [0.5 0.5], 1);
     [t3,y3,dens3,zm3] = Lloyd(pattern3, y2(:,end), [t2(end) 3*patternTime], par);
@@ -94,8 +91,8 @@ if testFull
     t = [t1(1:end-1) t2(1:end-1) t3(1:end-1) t4(1:end-1) t5];
     y = [y1(:,1:end-1) y2(:,1:end-1) y3(:,1:end-1) y4(:,1:end-1) y5];
 else
-    t = [t1(1:end-1) t2];
-    y = [y1(:,1:end-1) y2];
+    t = t1;
+    y = y1;
 end
     
 % Visualisation

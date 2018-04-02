@@ -1,8 +1,8 @@
 function posNew = positionUpdateDiff(posOld, u, par )
 %CALCULATEWHEELSPEEDS This function computes the motor velocities for a differential driven robot
 
-vx = u(:,1) .* cos(posOld(:,3));
-vy = u(:,1) .* sin(posOld(:,3));
+vx = u(:,1) * cos(posOld(:,3));
+vy = u(:,1) * sin(posOld(:,3));
 omega = u(:,2);
 velocity = [vx, vy, omega];
 
