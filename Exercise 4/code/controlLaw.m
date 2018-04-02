@@ -6,13 +6,15 @@ k = 5;
 
 % determine centroid
 if Mv == 0
-    Cv = [0 , 0]'; % ?
+    u =0; 
 else
     Cv = Lv / Mv; 
+    
+    % compute setpoint
+    u = k * (Cv - posRi);
 end
 
-% compute setpoint
-u = k * (Cv - posRi);
+
 
 % check for nan
 if any(isnan(u))

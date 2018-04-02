@@ -80,8 +80,8 @@ if testFull
     [t4,y4,dens4,zm4] = Lloyd(pattern4, y3(:,end), [t3(end) 4*patternTime], par);
     zeroMass{4} = zm4;
 
-
-    i = 2;
+%%
+for i = 3
 
     disp('Computing pattern 5 ...')
     pattern5 = imageMassDensity('stars.mat',i);
@@ -98,14 +98,13 @@ else
     y = [y1(:,1:end-1) y2];
 end
     
-%% Visualisation
-%% animate robot trajectories
+% Visualisation
+% animate robot trajectories
 if options.animation
     disp('Preparing animation')
     animate(t,y,par,options, zeroMass);
 end
-
-%% plot Voronoi diagrams
+% plot Voronoi diagrams
 if options.plot
     disp('Preparing Voronoi diagrams:')
     disp('    initial state')
@@ -135,7 +134,7 @@ if options.plot
     axis([xlb xub ylb yub]);
 end
 
-%% plot density function
+% plot density function
 pattern = pattern5; dens = dens5;
 
 [xCoord, yCoord] = meshgrid(xlb:0.01:xub, ylb:0.01:yub);
@@ -145,13 +144,7 @@ for i = 1:size(xCoord,1)
         densDistribution(i,j) = pattern(xCoord(i,j), yCoord(i,j));
     end
 end
-%%
-rows = max(densDistribution);
-figure;
-plot(rows)
-xlabel('Row number')
-ylabel('Density')
-%%
+%
 % normalize
 maxMag = max(max(max(densDistribution)));
 densDistributionNorm = 1/maxMag*densDistribution;
@@ -165,3 +158,4 @@ for k = 1:N
 end
 axis equal;
 axis([xlb xub ylb yub 0 1]);
+end
