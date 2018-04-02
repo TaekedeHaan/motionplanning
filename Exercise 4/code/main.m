@@ -9,6 +9,7 @@
 % Mac Schwager, MIT, 2006
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+close all; clear all; clc
 
 %% Preparation
 % options
@@ -23,7 +24,7 @@ fs = options.ms;
 
 % parameters
 par = struct('boudary', [0 0;0 1;1 1;1 0],...   % field boudary
-             'N',       50,...          % numer of agents
+             'N',       30,...          % numer of agents
              'res',     10,...          % centroid calulation resolution
              'dt',      0.1);           % time step [s]
 N = par.N;
@@ -31,14 +32,14 @@ N = par.N;
 % parameters diff
 par.diffDrive = true;
 par.Krho = 2.5;
-par.Kalpha = 1.5;
+par.Kalpha = 4;
 par.backwardAllowed = true;
-par.useConstantSpeed = false;
-par.constantSpeed = 0.1;
+par.useConstantSpeed = true;
+par.constantSpeed = 0.2;
+par.minRho = 0.02; %[m]
+testFull = false;
 
-testFull = true; 
-
-patternTime = 2; % duration per goal pattern
+patternTime = 4; % duration per goal pattern
 
 % derived constants
 xlb = min(par.boudary(:,1));
@@ -81,13 +82,13 @@ if testFull
     [t4,y4,dens4,zm4] = Lloyd(pattern4, y3(:,end), [t3(end) 4*patternTime], par);
     zeroMass{4} = zm4;
 
-%%
-for i = 1
-
-    disp('Computing pattern 5 ...')
-    pattern5 = imageMassDensity('stars.mat',i);
-    [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime], par);
-    zeroMass{5} = zm5;
+    %%
+    for i = 1
+        disp('Computing pattern 5 ...')
+        pattern5 = imageMassDensity('stars.mat',i);
+        [t5,y5,dens5,zm5] = Lloyd(pattern5, y4(:,end), [t4(end) 5*patternTime], par);
+        zeroMass{5} = zm5;
+    end
 end
 
 % combine
@@ -133,6 +134,9 @@ if options.plot
     end
     axis equal;
     axis([xlb xub ylb yub]);
+    
+    saveas(gcf, 'fig/traject', 'jpg');
+    saveas(gcf, 'fig/traject.eps', 'epsc');
 end
 
 % plot density function
@@ -159,4 +163,3 @@ for k = 1:N
 end
 axis equal;
 axis([xlb xub ylb yub 0 1]);
-end

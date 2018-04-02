@@ -34,7 +34,7 @@ for ti = 1:length(t)
     y(:,ti) = positions(:);
     inputs = zeros(size(positions,1),2);
     
-    for i = 1:N
+    parfor i = 1:N
         posRi = positions(i,:)';
         
         % calculate Voronoi        

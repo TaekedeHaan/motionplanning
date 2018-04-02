@@ -21,7 +21,6 @@ ylb = min(par.boudary(:,2));
 yub = max(par.boudary(:,2));
 
 for i =1:length(posNew)
-    
     if posNew(i,1)< xlb
         posNew(i,1) = xlb;
     elseif posNew(i,1) > xub
@@ -33,7 +32,6 @@ for i =1:length(posNew)
     elseif posNew(i,2) > yub
         posNew(i,2) = yub;
     end
-        
 end
 
 
